@@ -185,7 +185,8 @@
     .form-group { margin-bottom: 14px; }
     label { display: block; font-size: 0.85rem; font-weight: 600; margin-bottom: 5px; }
     input[type="email"],
-    input[type="password"] {
+    input[type="password"],
+    input[type="text"] {
       width: 100%;
       padding: 10px 14px;
       border: 1px solid var(--grey-border);
@@ -253,23 +254,6 @@
     .mt-4 { margin-top: 16px; }
     .mb-2 { margin-bottom: 8px; }
     .divider { border: none; border-top: 1px solid var(--grey-border); margin: 16px 0; }
-
-    /* ── Tool search ───────────────────────────────────────── */
-    .tool-search-row {
-      display: flex;
-      gap: 8px;
-    }
-    .tool-search-row input {
-      flex: 1;
-      padding: 10px 14px;
-      border: 1px solid var(--grey-border);
-      border-left: 3px solid var(--teal);
-      border-radius: 6px;
-      font-size: 1rem;
-      outline: none;
-      transition: border-color .2s;
-    }
-    .tool-search-row input:focus { border-color: var(--teal); }
 
     /* ── Logout link ───────────────────────────────────────── */
     .logout-link {
@@ -390,6 +374,29 @@
       </div>
     </div>
 
+    <!-- ── PAGE: Home ───────────────────────────────────────── -->
+    <div id="page-home" class="page">
+      <span class="logout-link" id="btn-logout-home">Log out</span>
+
+      <div class="card mb-2">
+        <div class="card-header">🔍 Find a Tool</div>
+        <div class="card-body">
+          <p style="font-size:.85rem; color:var(--text-muted); margin-bottom:14px;">
+            Search for a tool by name, or scan its QR code.
+          </p>
+          <div class="form-group">
+            <label for="tool-search">Tool name</label>
+            <input type="text" id="tool-search" list="tools-datalist"
+                   placeholder="Start typing a tool name…" autocomplete="off" />
+            <datalist id="tools-datalist"></datalist>
+          </div>
+          <button class="btn btn-teal btn-block" id="btn-lookup-tool">Look Up Tool</button>
+          <hr class="divider" />
+          <button class="btn btn-outline btn-block" id="btn-go-scan">📷 Scan a QR Code</button>
+        </div>
+      </div>
+    </div>
+
     <!-- ── PAGE: QR Scanner / Home ────────────────────────── -->
     <div id="page-scanner" class="page">
       <span class="logout-link" id="btn-logout-scanner">Log out</span>
@@ -402,84 +409,6 @@
           </p>
           <div id="qr-reader"></div>
           <div id="qr-error" style="display:none;" class="status-banner error mt-4"></div>
-        </div>
-      </div>
-      <div class="card">
-        <div class="card-header">🔍 Browse by Tool Name</div>
-        <div class="card-body">
-          <p style="font-size:.85rem; color:var(--text-muted); margin-bottom:14px;">
-            Start typing a tool name to search, then press Look Up.
-          </p>
-          <div class="tool-search-row">
-            <input
-              type="text"
-              id="tool-search-input"
-              list="tool-slugs"
-              placeholder="e.g. laser-bluey"
-              autocomplete="off"
-              autocorrect="off"
-              autocapitalize="off"
-              spellcheck="false"
-            />
-            <datalist id="tool-slugs">
-              <option value="air-compressor-1">
-              <option value="bandsaw-1">
-              <option value="bandsaw-3">
-              <option value="bikespace-tools">
-              <option value="brother-scan-cut">
-              <option value="chunky-cnc">
-              <option value="crafts-sewing-1">
-              <option value="crafts-sewing-2">
-              <option value="crafts-sewing-3">
-              <option value="dewalt-mitre-saw">
-              <option value="drill-1">
-              <option value="electronics-ir-1">
-              <option value="embroidery-machine">
-              <option value="heatpress">
-              <option value="herb-jr-surface-grin">
-              <option value="hydraulic-press">
-              <option value="impact-driver-1">
-              <option value="laser-bluey">
-              <option value="mcps-2">
-              <option value="metal-angle-grinder">
-              <option value="metal-bandsaw-1">
-              <option value="metal-bench-grinder">
-              <option value="metal-lathe-1">
-              <option value="metal-lathe-2">
-              <option value="metal-mill">
-              <option value="morticer_1">
-              <option value="multimeter-1">
-              <option value="multimeters-budget-h">
-              <option value="oscilloscope-1">
-              <option value="pillar_drill_1">
-              <option value="printer-lfp-1">
-              <option value="printer-wax-1">
-              <option value="prusa-mk4-kim">
-              <option value="prusa-mk4-romanov">
-              <option value="psp-2010-dc-supply">
-              <option value="router-table">
-              <option value="router1">
-              <option value="sander-2">
-              <option value="saw-1">
-              <option value="sewing-machine-singe">
-              <option value="solder-1">
-              <option value="solder-2">
-              <option value="solder-3">
-              <option value="table-saw-2">
-              <option value="vac-former-1">
-              <option value="vinyl-cutter-1">
-              <option value="visual-arts-printer-">
-              <option value="walking-foot-sewing-">
-              <option value="wood-lathe">
-              <option value="wood-planer">
-              <option value="woodwork-circ-saw">
-              <option value="woodwork-cnc-1">
-              <option value="woodwork-jigsaw">
-              <option value="xtm-201-di">
-            </datalist>
-            <button class="btn btn-teal" id="btn-tool-lookup">Look Up</button>
-          </div>
-          <div id="search-error" style="display:none;" class="status-banner error mt-4"></div>
         </div>
       </div>
     </div>
@@ -498,6 +427,53 @@
   // ─────────────────────────────────────────────────────────────────
   // ─────────────────────────────────────────────────────────────────
   const WORKER_URL = 'https://worker.hacmanoperations.workers.dev'
+
+  // ─────────────────────────────────────────────────────────────────
+  //  Tool directory (sorted alphabetically by name)
+  // ─────────────────────────────────────────────────────────────────
+  const TOOLS = [
+    { name: '1" Belt Sander & Disk Sander',              slug: 'sander-2' },
+    { name: '3D Printers: Prusa MK4 - Kim',              slug: 'prusa-mk4-kim' },
+    { name: '3D Printers: Prusa Mk4 - Romanov',          slug: 'prusa-mk4-romanov' },
+    { name: '3D Printers: Prusa XL',                     slug: 'prusa-xl' },
+    { name: 'Bandsaw (Green)',                            slug: 'bandsaw-1' },
+    { name: 'Bandsaw - Axminster AP2920B',                slug: 'bandsaw-3' },
+    { name: 'Bench Grinder',                             slug: 'metal-bench-grinder' },
+    { name: 'Chunky CNC Machine',                        slug: 'chunky-cnc' },
+    { name: 'CNC Machine',                               slug: 'woodwork-cnc-1' },
+    { name: 'Dewalt Mitre Saw',                          slug: 'dewalt-mitre-saw' },
+    { name: 'Embroidery Machine',                        slug: 'embroidery-machine' },
+    { name: 'Handheld Circular Saw (Tracksaw)',           slug: 'woodwork-circ-saw' },
+    { name: 'Herbert Junior Surface Grinder',            slug: 'herb-jr-surface-grin' },
+    { name: 'Hydraulic Press',                           slug: 'hydraulic-press' },
+    { name: 'Laser Cutter - Bluey',                      slug: 'laser-bluey' },
+    { name: 'Lumberjack Angle Grinder',                  slug: 'metal-angle-grinder' },
+    { name: 'Metal Bandsaw',                             slug: 'metal-bandsaw-1' },
+    { name: 'Metal Lathe - Myford ML7',                  slug: 'metal-lathe-1' },
+    { name: 'Metal Lathe - Warco',                       slug: 'metal-lathe-2' },
+    { name: 'Metalwork Mill',                            slug: 'metal-mill' },
+    { name: 'Morticer',                                  slug: 'morticer_1' },
+    { name: 'Router Table',                              slug: 'router-table' },
+    { name: 'Sewing Machine (Lervia)',                   slug: 'crafts-sewing-2' },
+    { name: 'Sewing Machine (Singer 95K40, leather)',    slug: 'sewing-machine-singe' },
+    { name: 'Sewing Machine (Singer Heavy Duty x4)',     slug: 'crafts-sewing-1' },
+    { name: 'Singer 211 Walking Foot Sewing Machine',    slug: 'walking-foot-sewing-' },
+    { name: 'Singer Overlocker',                         slug: 'crafts-sewing-3' },
+    { name: 'Table Saw',                                 slug: 'table-saw-2' },
+    { name: 'Welding Machine',                           slug: 'xtm-201-di' },
+    { name: 'Wood Lathe',                                slug: 'wood-lathe' },
+    { name: 'Wood Planing & Thickness Machine',          slug: 'wood-planer' },
+  ]
+
+  // Build name → slug lookup and populate the datalist
+  const toolByName = {}
+  const datalist = document.getElementById('tools-datalist')
+  TOOLS.forEach(t => {
+    toolByName[t.name] = t.slug
+    const opt = document.createElement('option')
+    opt.value = t.name
+    datalist.appendChild(opt)
+  })
 
   // ─────────────────────────────────────────────────────────────────
   //  State
@@ -579,7 +555,7 @@
         sessionStorage.removeItem('pending_tool')
         await loadTool(pendingTool)
       } else {
-        startScanner()
+        showPage('home')
       }
     } catch (e) {
       errEl.textContent = e.message
@@ -777,9 +753,9 @@
       return
     }
 
-    // No tool in URL — go to scanner if logged in, else login
+    // No tool in URL — go to home if logged in, else login
     if (getToken()) {
-      startScanner()
+      showPage('home')
     } else {
       showPage('login')
     }
@@ -795,29 +771,29 @@
 
   document.getElementById('btn-logout').addEventListener('click', logout)
   document.getElementById('btn-logout-scanner').addEventListener('click', logout)
+  document.getElementById('btn-logout-home').addEventListener('click', logout)
+
+  document.getElementById('btn-go-scan').addEventListener('click', () => startScanner())
+
+  document.getElementById('btn-lookup-tool').addEventListener('click', () => {
+    const name = document.getElementById('tool-search').value.trim()
+    const slug = toolByName[name]
+    if (!slug) {
+      // Not an exact match — ignore if empty, warn if unrecognised
+      if (name) alert(`"${name}" wasn't recognised. Please select a tool from the list.`)
+      return
+    }
+    document.getElementById('tool-search').value = ''
+    loadTool(slug)
+  })
+
+  document.getElementById('tool-search').addEventListener('keydown', e => {
+    if (e.key === 'Enter') document.getElementById('btn-lookup-tool').click()
+  })
 
   document.getElementById('btn-scan-another').addEventListener('click', () => {
     startScanner()
   })
-
-  document.getElementById('btn-tool-lookup').addEventListener('click', doToolSearch)
-  document.getElementById('tool-search-input').addEventListener('keydown', e => {
-    if (e.key === 'Enter') doToolSearch()
-  })
-
-  function doToolSearch() {
-    const input  = document.getElementById('tool-search-input')
-    const errEl  = document.getElementById('search-error')
-    const slug   = input.value.trim()
-    errEl.style.display = 'none'
-    if (!slug) {
-      errEl.textContent = 'Please enter or select a tool name.'
-      errEl.style.display = 'flex'
-      return
-    }
-    input.value = ''
-    loadTool(slug)
-  }
 
   // ─────────────────────────────────────────────────────────────────
   //  Boot
