@@ -1,0 +1,805 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Hackspace Manchester – Tool Lookup</title>
+  <meta name="theme-color" content="#1E8C99" />
+
+  <!-- QR scanning library -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html5-qrcode/2.3.8/html5-qrcode.min.js"></script>
+
+  <style>
+    /* ── Design tokens ─────────────────────────────────────── */
+    :root {
+      --teal:        #1E8C99;
+      --teal-dark:   #156975;
+      --teal-light:  #e6f7f9;
+      --yellow-a:    #FFF000;
+      --yellow-b:    #FFFAAA;
+      --green:       #28a745;
+      --red:         #dc3545;
+      --orange:      #fd7e14;
+      --grey-bg:     #f5f7fa;
+      --grey-border: #dee2e6;
+      --text:        #212529;
+      --text-muted:  #6c757d;
+      --radius:      10px;
+      --shadow:      0 2px 12px rgba(0,0,0,.10);
+    }
+
+    /* ── Reset & base ──────────────────────────────────────── */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+      background: var(--grey-bg);
+      color: var(--text);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+    a { color: var(--teal); }
+
+    /* ── Header ────────────────────────────────────────────── */
+    header {
+      background: linear-gradient(90deg, var(--yellow-a) 0%, var(--yellow-b) 100%);
+      border-bottom: 2px solid #ccc;
+      padding: 12px 20px;
+      display: flex;
+      align-items: center;
+      gap: 14px;
+    }
+    header img { height: 48px; }
+    header .header-text h1 {
+      font-size: 1.1rem;
+      font-weight: 700;
+      color: var(--text);
+      line-height: 1.2;
+    }
+    header .header-text p {
+      font-size: 0.78rem;
+      color: var(--text-muted);
+    }
+
+    /* ── Main content area ─────────────────────────────────── */
+    main {
+      flex: 1;
+      max-width: 640px;
+      width: 100%;
+      margin: 0 auto;
+      padding: 20px 16px 40px;
+    }
+
+    /* ── Card ──────────────────────────────────────────────── */
+    .card {
+      background: #fff;
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      overflow: hidden;
+      margin-bottom: 16px;
+    }
+    .card-header {
+      background: var(--teal);
+      color: #fff;
+      padding: 12px 18px;
+      font-weight: 600;
+      font-size: 0.95rem;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .card-body { padding: 18px; }
+
+    /* ── Status banner ─────────────────────────────────────── */
+    .status-banner {
+      border-radius: var(--radius);
+      padding: 14px 18px;
+      margin-bottom: 16px;
+      font-weight: 600;
+      font-size: 1rem;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .status-banner.inducted  { background: #d4edda; color: #155724; border: 1px solid #c3e6cb; }
+    .status-banner.not-inducted { background: #fff3cd; color: #856404; border: 1px solid #ffeeba; }
+    .status-banner.error     { background: #f8d7da; color: #721c24; border: 1px solid #f5c6cb; }
+
+    /* ── Access code ───────────────────────────────────────── */
+    .access-code-box {
+      background: var(--teal-light);
+      border: 2px solid var(--teal);
+      border-radius: var(--radius);
+      text-align: center;
+      padding: 18px;
+      margin-bottom: 16px;
+    }
+    .access-code-box .label { font-size: 0.8rem; color: var(--teal-dark); font-weight: 600; letter-spacing: .05em; text-transform: uppercase; }
+    .access-code-box .code  { font-size: 3rem; font-weight: 800; color: var(--teal-dark); letter-spacing: .15em; line-height: 1.1; }
+
+    /* ── Info grid ─────────────────────────────────────────── */
+    .info-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+      margin-bottom: 16px;
+    }
+    .info-item {
+      background: #fff;
+      border: 1px solid var(--grey-border);
+      border-radius: 8px;
+      padding: 12px 14px;
+    }
+    .info-item .info-label { font-size: 0.72rem; text-transform: uppercase; letter-spacing: .05em; color: var(--text-muted); margin-bottom: 4px; }
+    .info-item .info-value { font-size: 0.95rem; font-weight: 600; }
+    .info-item .info-value.good   { color: var(--green); }
+    .info-item .info-value.bad    { color: var(--red); }
+    .info-item .info-value.warn   { color: var(--orange); }
+
+    /* ── PPE grid ──────────────────────────────────────────── */
+    .ppe-grid {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+    }
+    .ppe-item {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 6px;
+      width: 90px;
+    }
+    .ppe-item img {
+      width: 70px;
+      height: 70px;
+      object-fit: contain;
+      border: 1px solid var(--grey-border);
+      border-radius: 8px;
+      padding: 4px;
+      background: #fff;
+    }
+    .ppe-item span { font-size: 0.72rem; text-align: center; color: var(--text-muted); font-weight: 500; }
+
+    /* ── Buttons ───────────────────────────────────────────── */
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 10px 18px;
+      border-radius: 6px;
+      border: none;
+      font-size: 0.9rem;
+      font-weight: 600;
+      cursor: pointer;
+      text-decoration: none;
+      transition: opacity .15s, transform .1s;
+    }
+    .btn:active { transform: scale(.97); }
+    .btn:hover  { opacity: .88; }
+    .btn-teal   { background: var(--teal); color: #fff; }
+    .btn-outline { background: transparent; border: 2px solid var(--teal); color: var(--teal); }
+    .btn-danger  { background: var(--red); color: #fff; }
+    .btn-block   { display: flex; width: 100%; justify-content: center; margin-bottom: 10px; }
+
+    /* ── Forms ─────────────────────────────────────────────── */
+    .form-group { margin-bottom: 14px; }
+    label { display: block; font-size: 0.85rem; font-weight: 600; margin-bottom: 5px; }
+    input[type="email"],
+    input[type="password"],
+    input[type="text"] {
+      width: 100%;
+      padding: 10px 14px;
+      border: 1px solid var(--grey-border);
+      border-left: 3px solid var(--teal);
+      border-radius: 6px;
+      font-size: 1rem;
+      outline: none;
+      transition: border-color .2s;
+    }
+    input:focus { border-color: var(--teal); }
+
+    /* ── Loader spinner ────────────────────────────────────── */
+    .spinner {
+      display: inline-block;
+      width: 22px; height: 22px;
+      border: 3px solid rgba(30,140,153,.3);
+      border-top-color: var(--teal);
+      border-radius: 50%;
+      animation: spin .7s linear infinite;
+      vertical-align: middle;
+      margin-right: 8px;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .loading-msg { text-align: center; padding: 40px 20px; color: var(--text-muted); }
+
+    /* ── QR scanner ────────────────────────────────────────── */
+    #qr-reader { border-radius: var(--radius); overflow: hidden; }
+    #qr-reader video { border-radius: var(--radius); }
+
+    /* ── Tool name heading ─────────────────────────────────── */
+    .tool-name {
+      font-size: 1.4rem;
+      font-weight: 700;
+      margin-bottom: 4px;
+    }
+    .tool-location {
+      font-size: 0.85rem;
+      color: var(--text-muted);
+      margin-bottom: 16px;
+    }
+
+    /* ── Footer nav ────────────────────────────────────────── */
+    .bottom-nav {
+      display: flex;
+      gap: 10px;
+      margin-top: 8px;
+    }
+
+    /* ── Section title ─────────────────────────────────────── */
+    .section-title {
+      font-size: 0.78rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: .06em;
+      color: var(--text-muted);
+      margin-bottom: 10px;
+    }
+
+    /* ── Pages ─────────────────────────────────────────────── */
+    .page { display: none; }
+    .page.active { display: block; }
+
+    /* ── Utility ───────────────────────────────────────────── */
+    .text-center { text-align: center; }
+    .mt-4 { margin-top: 16px; }
+    .mb-2 { margin-bottom: 8px; }
+    .divider { border: none; border-top: 1px solid var(--grey-border); margin: 16px 0; }
+
+    /* ── Logout link ───────────────────────────────────────── */
+    .logout-link {
+      font-size: 0.8rem;
+      color: var(--text-muted);
+      cursor: pointer;
+      text-align: right;
+      display: block;
+      margin-bottom: 8px;
+    }
+    .logout-link:hover { color: var(--red); }
+  </style>
+</head>
+
+<body>
+
+  <header>
+    <!-- Hackspace Manchester logo (served from their CDN) -->
+    <img src="https://members.hacman.org.uk/img/logo-new.png" alt="Hackspace Manchester" onerror="this.style.display='none'" />
+    <div class="header-text">
+      <h1>Hackspace Manchester</h1>
+      <p>Tool Lookup</p>
+    </div>
+  </header>
+
+  <main>
+
+    <!-- ── PAGE: Login ────────────────────────────────────── -->
+    <div id="page-login" class="page">
+      <div class="card">
+        <div class="card-header">🔑 Member Login</div>
+        <div class="card-body">
+          <p style="margin-bottom:16px; color:var(--text-muted); font-size:.9rem;">
+            Log in with your Hackspace Manchester member account. You only need to do this once.
+          </p>
+          <div class="form-group">
+            <label for="input-email">Email address</label>
+            <input type="email" id="input-email" placeholder="you@example.com" autocomplete="email" />
+          </div>
+          <div class="form-group">
+            <label for="input-password">Password</label>
+            <input type="password" id="input-password" placeholder="Your password" autocomplete="current-password" />
+          </div>
+          <div id="login-error" class="status-banner error" style="display:none; margin-bottom:12px;"></div>
+          <button class="btn btn-teal btn-block" id="btn-login">
+            <span id="login-btn-text">Log in</span>
+          </button>
+          <p class="text-center" style="font-size:.8rem; color:var(--text-muted); margin-top:8px;">
+            <a href="https://members.hacman.org.uk/password/forgotten" target="_blank">Forgot password?</a>
+          </p>
+          <hr class="divider" />
+          <div style="font-size:.78rem; color:var(--text-muted); display:flex; flex-direction:column; gap:8px;">
+            <p>🗄️ <strong>No data is stored.</strong> Nothing is saved server-side — all member data is fetched live from the Hackspace members site each time.</p>
+            <p>🔒 <strong>Your credentials are secure.</strong> Your email and password are sent over HTTPS, used only to log in to the Hackspace site, and then immediately discarded. Only your session token — equivalent to being logged in via a browser — is stored in your own browser.</p>
+            <p>⏱️ <strong>Login is persistent.</strong> If your session expires, the app will prompt you to log in again automatically.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── PAGE: Loading ──────────────────────────────────── -->
+    <div id="page-loading" class="page">
+      <div class="loading-msg">
+        <div class="spinner"></div>
+        <span id="loading-text">Loading…</span>
+      </div>
+    </div>
+
+    <!-- ── PAGE: Tool result ──────────────────────────────── -->
+    <div id="page-tool" class="page">
+      <span class="logout-link" id="btn-logout">Log out</span>
+
+      <div class="tool-name" id="tool-name"></div>
+      <div class="tool-location" id="tool-location"></div>
+
+      <!-- Induction status banner -->
+      <div id="status-banner" class="status-banner"></div>
+
+      <!-- Access code (only when inducted) -->
+      <div id="access-code-box" class="access-code-box" style="display:none;">
+        <div class="label">Access Code</div>
+        <div class="code" id="access-code-value"></div>
+      </div>
+
+      <!-- Quick info grid -->
+      <div class="info-grid">
+        <div class="info-item">
+          <div class="info-label">Tool Status</div>
+          <div class="info-value" id="info-tool-working">—</div>
+        </div>
+        <div class="info-item">
+          <div class="info-label">Lone Working</div>
+          <div class="info-value" id="info-lone-working">—</div>
+        </div>
+      </div>
+
+      <!-- PPE -->
+      <div id="ppe-section" style="display:none;" class="card">
+        <div class="card-header">🦺 PPE Required</div>
+        <div class="card-body">
+          <div class="ppe-grid" id="ppe-grid"></div>
+        </div>
+      </div>
+
+      <!-- Links -->
+      <div class="bottom-nav">
+        <a id="link-docs" class="btn btn-teal" style="display:none;" target="_blank">
+          📄 Documentation
+        </a>
+        <a id="link-induction" class="btn btn-outline" style="display:none;" target="_blank">
+          🎓 Book Induction
+        </a>
+      </div>
+
+      <hr class="divider" />
+      <div class="text-center">
+        <button class="btn btn-outline" id="btn-scan-another">📷 Scan Another Tool</button>
+      </div>
+    </div>
+
+    <!-- ── PAGE: Home ───────────────────────────────────────── -->
+    <div id="page-home" class="page">
+      <span class="logout-link" id="btn-logout-home">Log out</span>
+
+      <div class="card mb-2">
+        <div class="card-header">🔍 Find a Tool</div>
+        <div class="card-body">
+          <p style="font-size:.85rem; color:var(--text-muted); margin-bottom:14px;">
+            Search for a tool by name, or scan its QR code.
+          </p>
+          <div class="form-group">
+            <label for="tool-search">Tool name</label>
+            <input type="text" id="tool-search" list="tools-datalist"
+                   placeholder="Start typing a tool name…" autocomplete="off" />
+            <datalist id="tools-datalist"></datalist>
+          </div>
+          <button class="btn btn-teal btn-block" id="btn-lookup-tool">Look Up Tool</button>
+          <hr class="divider" />
+          <button class="btn btn-outline btn-block" id="btn-go-scan">📷 Scan a QR Code</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── PAGE: QR Scanner / Home ────────────────────────── -->
+    <div id="page-scanner" class="page">
+      <span class="logout-link" id="btn-logout-scanner">Log out</span>
+
+      <div class="card mb-2">
+        <div class="card-header">📷 Scan a Tool QR Code</div>
+        <div class="card-body">
+          <p style="font-size:.85rem; color:var(--text-muted); margin-bottom:14px;">
+            Point your camera at the QR code sticker on any tool to look it up.
+          </p>
+          <div id="qr-reader"></div>
+          <div id="qr-error" style="display:none;" class="status-banner error mt-4"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── PAGE: Error ────────────────────────────────────── -->
+    <div id="page-error" class="page">
+      <div class="status-banner error" id="error-message"></div>
+      <div class="text-center mt-4">
+        <button class="btn btn-outline" id="btn-error-back">← Go Back</button>
+      </div>
+    </div>
+
+  </main>
+
+  <script>
+  // ─────────────────────────────────────────────────────────────────
+  // ─────────────────────────────────────────────────────────────────
+  const WORKER_URL = 'https://worker.hacmanoperations.workers.dev'
+
+  // ─────────────────────────────────────────────────────────────────
+  //  Tool directory (sorted alphabetically by name)
+  // ─────────────────────────────────────────────────────────────────
+  const TOOLS = [
+    { name: '1" Belt Sander & Disk Sander',              slug: 'sander-2' },
+    { name: '3D Printers: Prusa MK4 - Kim',              slug: 'prusa-mk4-kim' },
+    { name: '3D Printers: Prusa Mk4 - Romanov',          slug: 'prusa-mk4-romanov' },
+    { name: '3D Printers: Prusa XL',                     slug: 'prusa-xl' },
+    { name: 'Bandsaw (Green)',                            slug: 'bandsaw-1' },
+    { name: 'Bandsaw - Axminster AP2920B',                slug: 'bandsaw-3' },
+    { name: 'Bench Grinder',                             slug: 'metal-bench-grinder' },
+    { name: 'Chunky CNC Machine',                        slug: 'chunky-cnc' },
+    { name: 'CNC Machine',                               slug: 'woodwork-cnc-1' },
+    { name: 'Dewalt Mitre Saw',                          slug: 'dewalt-mitre-saw' },
+    { name: 'Embroidery Machine',                        slug: 'embroidery-machine' },
+    { name: 'Handheld Circular Saw (Tracksaw)',           slug: 'woodwork-circ-saw' },
+    { name: 'Herbert Junior Surface Grinder',            slug: 'herb-jr-surface-grin' },
+    { name: 'Hydraulic Press',                           slug: 'hydraulic-press' },
+    { name: 'Laser Cutter - Bluey',                      slug: 'laser-bluey' },
+    { name: 'Lumberjack Angle Grinder',                  slug: 'metal-angle-grinder' },
+    { name: 'Metal Bandsaw',                             slug: 'metal-bandsaw-1' },
+    { name: 'Metal Lathe - Myford ML7',                  slug: 'metal-lathe-1' },
+    { name: 'Metal Lathe - Warco',                       slug: 'metal-lathe-2' },
+    { name: 'Metalwork Mill',                            slug: 'metal-mill' },
+    { name: 'Morticer',                                  slug: 'morticer_1' },
+    { name: 'Router Table',                              slug: 'router-table' },
+    { name: 'Sewing Machine (Lervia)',                   slug: 'crafts-sewing-2' },
+    { name: 'Sewing Machine (Singer 95K40, leather)',    slug: 'sewing-machine-singe' },
+    { name: 'Sewing Machine (Singer Heavy Duty x4)',     slug: 'crafts-sewing-1' },
+    { name: 'Singer 211 Walking Foot Sewing Machine',    slug: 'walking-foot-sewing-' },
+    { name: 'Singer Overlocker',                         slug: 'crafts-sewing-3' },
+    { name: 'Table Saw',                                 slug: 'table-saw-2' },
+    { name: 'Welding Machine',                           slug: 'xtm-201-di' },
+    { name: 'Wood Lathe',                                slug: 'wood-lathe' },
+    { name: 'Wood Planing & Thickness Machine',          slug: 'wood-planer' },
+  ]
+
+  // Build name → slug lookup and populate the datalist
+  const toolByName = {}
+  const datalist = document.getElementById('tools-datalist')
+  TOOLS.forEach(t => {
+    toolByName[t.name] = t.slug
+    const opt = document.createElement('option')
+    opt.value = t.name
+    datalist.appendChild(opt)
+  })
+
+  // ─────────────────────────────────────────────────────────────────
+  //  State
+  // ─────────────────────────────────────────────────────────────────
+  const TOKEN_KEY = 'hacman_token'
+  let qrScanner = null
+
+  // ─────────────────────────────────────────────────────────────────
+  //  Page routing
+  // ─────────────────────────────────────────────────────────────────
+  function showPage(id) {
+    document.querySelectorAll('.page').forEach(p => p.classList.remove('active'))
+    document.getElementById('page-' + id).classList.add('active')
+  }
+
+  function showLoading(msg = 'Loading…') {
+    document.getElementById('loading-text').textContent = msg
+    showPage('loading')
+  }
+
+  function showError(msg, backPage = null) {
+    document.getElementById('error-message').textContent = msg
+    document.getElementById('btn-error-back').onclick = () => {
+      if (backPage) showPage(backPage)
+      else init()
+    }
+    showPage('error')
+  }
+
+  // ─────────────────────────────────────────────────────────────────
+  //  Auth helpers
+  // ─────────────────────────────────────────────────────────────────
+  function getToken() { return localStorage.getItem(TOKEN_KEY) }
+  function setToken(t) { localStorage.setItem(TOKEN_KEY, t) }
+  function clearToken() { localStorage.removeItem(TOKEN_KEY) }
+
+  function logout() {
+    clearToken()
+    stopScanner()
+    showPage('login')
+  }
+
+  // ─────────────────────────────────────────────────────────────────
+  //  Login
+  // ─────────────────────────────────────────────────────────────────
+  async function doLogin() {
+    const email    = document.getElementById('input-email').value.trim()
+    const password = document.getElementById('input-password').value
+    const errEl    = document.getElementById('login-error')
+    const btnText  = document.getElementById('login-btn-text')
+
+    errEl.style.display = 'none'
+    if (!email || !password) {
+      errEl.textContent = 'Please enter your email and password.'
+      errEl.style.display = 'flex'
+      return
+    }
+
+    btnText.innerHTML = '<span class="spinner"></span> Logging in…'
+    document.getElementById('btn-login').disabled = true
+
+    try {
+      const res  = await fetch(`${WORKER_URL}/api/login`, {
+        method:  'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body:    JSON.stringify({ email, password }),
+      })
+      const data = await res.json()
+
+      if (!res.ok || !data.token) {
+        throw new Error(data.error || 'Login failed')
+      }
+
+      setToken(data.token)
+
+      // If there's a pending tool in the URL, load it; otherwise go to scanner
+      const pendingTool = sessionStorage.getItem('pending_tool')
+      if (pendingTool) {
+        sessionStorage.removeItem('pending_tool')
+        await loadTool(pendingTool)
+      } else {
+        showPage('home')
+      }
+    } catch (e) {
+      errEl.textContent = e.message
+      errEl.style.display = 'flex'
+    } finally {
+      btnText.textContent = 'Log in'
+      document.getElementById('btn-login').disabled = false
+    }
+  }
+
+  // ─────────────────────────────────────────────────────────────────
+  //  Tool lookup
+  // ─────────────────────────────────────────────────────────────────
+  async function loadTool(slug) {
+    const token = getToken()
+    if (!token) {
+      sessionStorage.setItem('pending_tool', slug)
+      showPage('login')
+      return
+    }
+
+    showLoading(`Looking up ${slug}…`)
+
+    try {
+      const res  = await fetch(`${WORKER_URL}/api/tool/${encodeURIComponent(slug)}`, {
+        headers: { Authorization: `Bearer ${token}` },
+      })
+      const data = await res.json()
+
+      if (res.status === 401) {
+        // Session expired — clear token and re-login
+        clearToken()
+        sessionStorage.setItem('pending_tool', slug)
+        showPage('login')
+        return
+      }
+
+      if (!res.ok) throw new Error(data.error || 'Could not load tool data')
+
+      renderTool(data)
+    } catch (e) {
+      showError(e.message)
+    }
+  }
+
+  // ─────────────────────────────────────────────────────────────────
+  //  Render tool page
+  // ─────────────────────────────────────────────────────────────────
+  function renderTool(d) {
+    document.getElementById('tool-name').textContent = d.name
+
+    // Location
+    const locEl = document.getElementById('tool-location')
+    locEl.textContent = d.location ? `📍 ${d.location}` : ''
+
+    // Status banner
+    const banner = document.getElementById('status-banner')
+    if (d.inducted) {
+      banner.className = 'status-banner inducted'
+      banner.textContent = '✅ You are inducted and can use this tool'
+    } else {
+      banner.className = 'status-banner not-inducted'
+      banner.textContent = '⚠️ You are not yet inducted on this tool'
+    }
+
+    // Access code
+    const codeBox = document.getElementById('access-code-box')
+    if (d.inducted && d.accessCode) {
+      document.getElementById('access-code-value').textContent = d.accessCode
+      codeBox.style.display = 'block'
+    } else {
+      codeBox.style.display = 'none'
+    }
+
+    // Tool working
+    const workingEl = document.getElementById('info-tool-working')
+    workingEl.textContent  = d.toolWorking || '—'
+    workingEl.className    = 'info-value ' + statusClass(d.toolWorking)
+
+    // Lone working
+    const loneEl = document.getElementById('info-lone-working')
+    loneEl.textContent = d.loneWorking || '—'
+    loneEl.className   = 'info-value ' + statusClass(d.loneWorking)
+
+    // PPE
+    const ppeSection = document.getElementById('ppe-section')
+    const ppeGrid    = document.getElementById('ppe-grid')
+    if (d.ppe && d.ppe.length > 0) {
+      ppeGrid.innerHTML = d.ppe.map(item => `
+        <div class="ppe-item">
+          <img src="${item.imageUrl}" alt="${item.label}" onerror="this.style.display='none'" />
+          <span>${item.label}</span>
+        </div>`).join('')
+      ppeSection.style.display = 'block'
+    } else {
+      ppeSection.style.display = 'none'
+    }
+
+    // Docs link
+    const docsLink = document.getElementById('link-docs')
+    if (d.docsLink) {
+      docsLink.href         = d.docsLink
+      docsLink.style.display = 'inline-flex'
+    } else {
+      docsLink.style.display = 'none'
+    }
+
+    // Induction booking link
+    const inductionLink = document.getElementById('link-induction')
+    if (!d.inducted && d.bookingLink) {
+      inductionLink.href          = d.bookingLink
+      inductionLink.style.display = 'inline-flex'
+    } else {
+      inductionLink.style.display = 'none'
+    }
+
+    showPage('tool')
+  }
+
+  function statusClass(val) {
+    if (!val) return ''
+    const v = val.toLowerCase()
+    if (v.includes('yes') || v.includes('working') || v.includes('🟢')) return 'good'
+    if (v.includes('no')  || v.includes('🔴'))  return 'bad'
+    return 'warn'
+  }
+
+  // ─────────────────────────────────────────────────────────────────
+  //  QR scanner
+  // ─────────────────────────────────────────────────────────────────
+  function startScanner() {
+    stopScanner()
+    showPage('scanner')
+
+    qrScanner = new Html5Qrcode('qr-reader')
+    qrScanner.start(
+      { facingMode: 'environment' },
+      { fps: 10, qrbox: { width: 260, height: 260 } },
+      onQrSuccess,
+      () => {}  // suppress scan errors
+    ).catch(err => {
+      document.getElementById('qr-error').textContent =
+        'Camera access denied. Please allow camera access and reload.'
+      document.getElementById('qr-error').style.display = 'flex'
+    })
+  }
+
+  function stopScanner() {
+    if (qrScanner) {
+      qrScanner.stop().catch(() => {})
+      qrScanner = null
+    }
+  }
+
+  function onQrSuccess(text) {
+    stopScanner()
+
+    // Accept either:
+    //   - A full URL:  https://anything.com/?tool=metal-bandsaw-1
+    //   - A bare slug: metal-bandsaw-1
+    let slug = null
+    try {
+      const u = new URL(text)
+      slug = u.searchParams.get('tool')
+    } catch {
+      // Not a URL — treat as raw slug
+      slug = text.trim()
+    }
+
+    if (!slug) {
+      document.getElementById('qr-error').textContent = 'Could not read tool from QR code.'
+      document.getElementById('qr-error').style.display = 'flex'
+      startScanner()
+      return
+    }
+
+    loadTool(slug)
+  }
+
+  // ─────────────────────────────────────────────────────────────────
+  //  Initialise
+  // ─────────────────────────────────────────────────────────────────
+  function init() {
+    // Check if we arrived via a QR code URL (?tool=slug)
+    const params = new URLSearchParams(window.location.search)
+    const toolSlug = params.get('tool')
+
+    if (toolSlug) {
+      if (getToken()) {
+        loadTool(toolSlug)
+      } else {
+        sessionStorage.setItem('pending_tool', toolSlug)
+        showPage('login')
+      }
+      return
+    }
+
+    // No tool in URL — go to home if logged in, else login
+    if (getToken()) {
+      showPage('home')
+    } else {
+      showPage('login')
+    }
+  }
+
+  // ─────────────────────────────────────────────────────────────────
+  //  Event wiring
+  // ─────────────────────────────────────────────────────────────────
+  document.getElementById('btn-login').addEventListener('click', doLogin)
+  document.getElementById('input-password').addEventListener('keydown', e => {
+    if (e.key === 'Enter') doLogin()
+  })
+
+  document.getElementById('btn-logout').addEventListener('click', logout)
+  document.getElementById('btn-logout-scanner').addEventListener('click', logout)
+  document.getElementById('btn-logout-home').addEventListener('click', logout)
+
+  document.getElementById('btn-go-scan').addEventListener('click', () => startScanner())
+
+  document.getElementById('btn-lookup-tool').addEventListener('click', () => {
+    const name = document.getElementById('tool-search').value.trim()
+    const slug = toolByName[name]
+    if (!slug) {
+      // Not an exact match — ignore if empty, warn if unrecognised
+      if (name) alert(`"${name}" wasn't recognised. Please select a tool from the list.`)
+      return
+    }
+    document.getElementById('tool-search').value = ''
+    loadTool(slug)
+  })
+
+  document.getElementById('tool-search').addEventListener('keydown', e => {
+    if (e.key === 'Enter') document.getElementById('btn-lookup-tool').click()
+  })
+
+  document.getElementById('btn-scan-another').addEventListener('click', () => {
+    startScanner()
+  })
+
+  // ─────────────────────────────────────────────────────────────────
+  //  Boot
+  // ─────────────────────────────────────────────────────────────────
+  init()
+  </script>
+
+</body>
+</html>
